@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Dorizz Store — Threads Mini App</title>
+  
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: #121216;
+      --card-hover: #181820;
+      --border: #22222a;
+      --border-focus: #3b82f6;
+      --text: #f4f4f6;
+      --text-muted: #8e8e9a;
+      --accent: #3b82f6;
+      --accent-dim: rgba(59, 130, 246, 0.12);
+      --green: #10b981;
+      --green-dim: rgba(16, 185, 129, 0.12);
+      --orange: #f59e0b;
+      --orange-dim: rgba(245, 158, 11, 0.12);
+      --purple: #8b5cf6;
+      --purple-dim: rgba(139, 92, 246, 0.12);
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      line-height: 1.55;
+      padding: calc(14px + env(safe-area-inset-top)) 14px calc(40px + env(safe-area-inset-bottom));
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Mini App Header */
+    .header {
+      margin-bottom: 16px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    .brand-badge {
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 20px;
+      background: var(--accent-dim);
+      color: var(--accent);
+      font-weight: 600;
+      border: 1px solid rgba(59, 130, 246, 0.25);
+    }
+    .brand-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    /* Stats Grid */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 12px;
+    }
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 600;
+    }
+    .stat-val {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-top: 2px;
+    }
+    .stat-val.green { color: var(--green); }
+    .stat-val.accent { color: var(--accent); }
+
+    /* Controls Bar Sticky */
+    .sticky-bar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(9, 9, 11, 0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 8px 0 12px;
+      margin: 0 -14px 14px;
+      padding-left: 14px;
+      padding-right: 14px;
+      border-bottom: 1px solid rgba(34, 34, 42, 0.6);
+    }
+
+    .search-box {
+      position: relative;
+      margin-bottom: 10px;
+    }
+    .search-box input {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 11px;
+      padding: 10px 14px 10px 38px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus {
+      border-color: var(--border-focus);
+    }
+    .search-box .icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+
+    /* Filter Pills */
+    .filter-scroll {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .filter-scroll::-webkit-scrollbar { display: none; }
+    
+    .pill {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 500;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .pill:active { transform: scale(0.96); }
+    .pill.active {
+      background: var(--text);
+      color: #000;
+      border-color: var(--text);
+      font-weight: 600;
+    }
+
+    /* Feed & Cards */
+    .feed {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+    }
+    .card-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+    .meta-user {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 0.84rem;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .meta-user:hover { color: var(--accent); }
+    .badge-slot {
+      font-size: 0.68rem;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+    .slot-pagi { background: var(--orange-dim); color: var(--orange); }
+    .slot-siang { background: var(--accent-dim); color: var(--accent); }
+    .slot-malam { background: var(--purple-dim); color: var(--purple); }
+
+    .card-time {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .card-body {
+      font-size: 0.84rem;
+      color: #e4e4e7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.6;
+      background: rgba(0,0,0,0.25);
+      border-radius: 10px;
+      padding: 11px;
+      border: 1px solid rgba(255,255,255,0.03);
+    }
+    .card-body a {
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+    .schedule-id {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+    .copy-btn {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all 0.2s;
+    }
+    .copy-btn:active { transform: scale(0.95); }
+    .copy-btn.copied {
+      background: var(--green-dim);
+      color: var(--green);
+      border-color: rgba(16, 185, 129, 0.3);
+    }
+
+    /* Load more */
+    .load-more-btn {
+      margin-top: 16px;
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.84rem;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .load-more-btn:active { transform: scale(0.98); }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: calc(20px + env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #18181b;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid #27272a;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-title">Dorizz Threads Vault</div>
+      <div class="brand-badge">Mini App</div>
+    </div>
+    <div class="brand-desc">Monitoring & kurasi 2.070 postingan terjadwal CapCut Pro</div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Terjadwal</div>
+      <div class="stat-val green" id="stat-total">2,070</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Target Akun</div>
+      <div class="stat-val accent">23 Akun</div>
+    </div>
+  </div>
+
+  <!-- Sticky Filter Bar -->
+  <div class="sticky-bar">
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Cari konten, kata kunci, akun..." oninput="handleSearch()" />
+    </div>
+
+    <div class="filter-scroll" id="slot-filters">
+      <button class="pill active" onclick="setSlotFilter('all', this)">Semua Slot</button>
+      <button class="pill" onclick="setSlotFilter('Pagi', this)">🌅 Pagi (09.15)</button>
+      <button class="pill" onclick="setSlotFilter('Siang', this)">☀️ Siang (13.00)</button>
+      <button class="pill" onclick="setSlotFilter('Malam', this)">🌙 Malam (19.30)</button>
+    </div>
+  </div>
+
+  <!-- Cards Feed -->
+  <div class="feed" id="feed"></div>
+
+  <!-- Load More -->
+  <button class="load-more-btn" id="load-more" onclick="loadMore()" style="display: none;">Muat Lebih Banyak</button>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">📋 Teks berhasil disalin!</div>
+
+  <script>
+    // Init Telegram Web App
+    if (window.Telegram && window.Telegram.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
+      tg.expand();
+      if (tg.setHeaderColor) tg.setHeaderColor('#09090b');
+      if (tg.setBackgroundColor) tg.setBackgroundColor('#09090b');
+    }
+
+    function triggerHaptic(type = 'light') {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.impactOccurred(type);
+      }
+    }
+
+    let allPosts = [];
+    let filteredPosts = [];
+    let currentLimit = 30;
+    let selectedSlot = 'all';
+
+    async function loadData() {
+      try {
+        const res = await fetch('./data.json?v=' + Date.now());
+        allPosts = await res.json();
+        document.getElementById('stat-total').textContent = allPosts.length.toLocaleString();
+        applyFilters();
+      } catch (err) {
+        console.error('Failed to load data:', err);
+      }
+    }
+
+    function setSlotFilter(slot, btn) {
+      selectedSlot = slot;
+      document.querySelectorAll('#slot-filters .pill').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      triggerHaptic('light');
+      applyFilters();
+    }
+
+    function handleSearch() {
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const q = document.getElementById('search-input').value.toLowerCase().trim();
+      filteredPosts = allPosts.filter(item => {
+        const matchSlot = (selectedSlot === 'all') || (item.slot === selectedSlot);
+        const matchQuery = !q || 
+          item.username.toLowerCase().includes(q) || 
+          (item.text && item.text.toLowerCase().includes(q)) ||
+          item.date_wib.includes(q);
+        return matchSlot && matchQuery;
+      });
+      currentLimit = 30;
+      renderFeed();
+    }
+
+    function renderFeed() {
+      const container = document.getElementById('feed');
+      const toShow = filteredPosts.slice(0, currentLimit);
+      
+      if (toShow.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 40px 0; font-size: 0.85rem;">Tidak ada jadwal yang cocok.</div>';
+        document.getElementById('load-more').style.display = 'none';
+        return;
+      }
+
+      container.innerHTML = toShow.map((item, idx) => {
+        const slotClass = item.slot === 'Pagi' ? 'slot-pagi' : (item.slot === 'Siang' ? 'slot-siang' : 'slot-malam');
+        const formattedText = linkify(item.text || '');
+        return `
+          <div class="card">
+            <div class="card-meta">
+              <a class="meta-user" href="https://threads.net/@${item.username}" target="_blank">
+                <span>@${item.username}</span>
+              </a>
+              <span class="badge-slot ${slotClass}">${item.slot}</span>
+            </div>
+            <div class="card-time">
+              <span>📅 ${item.date_wib}</span>
+              <span>•</span>
+              <span>⏰ ${item.time_wib} WIB</span>
+            </div>
+            <div class="card-body">${formattedText}</div>
+            <div class="card-footer">
+              <span class="schedule-id">#${item.scheduleId ? item.scheduleId.slice(-6) : 'sync'}</span>
+              <button class="copy-btn" onclick="copyText(${idx}, this)">
+                <span>📋 Salin</span>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.getElementById('load-more').style.display = filteredPosts.length > currentLimit ? 'block' : 'none';
+    }
+
+    function linkify(text) {
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      return text.replace(urlRegex, url => `<a href="${url}" target="_blank">${url}</a>`);
+    }
+
+    function loadMore() {
+      currentLimit += 30;
+      triggerHaptic('light');
+      renderFeed();
+    }
+
+    function copyText(idx, btn) {
+      const item = filteredPosts[idx];
+      if (!item || !item.text) return;
+
+      navigator.clipboard.writeText(item.text).then(() => {
+        triggerHaptic('medium');
+        btn.classList.add('copied');
+        btn.innerHTML = '<span>✓ Tersalin</span>';
+        showToast('📋 Teks berhasil disalin!');
+        setTimeout(() => {
+          btn.classList.remove('copied');
+          btn.innerHTML = '<span>📋 Salin</span>';
+        }, 1800);
+      });
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
