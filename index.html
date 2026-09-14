@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Threads Schedule Vault — @azzimi_</title>
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #09090b;
+      --card-bg: #121215;
+      --card-border: #27272a;
+      --card-hover: #18181b;
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --accent: #3b82f6;
+      --accent-muted: rgba(59, 130, 246, 0.15);
+      --badge-bg: #1e1e24;
+      --badge-border: #323238;
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
+      font-family: var(--font);
+      line-height: 1.6;
+      padding: 16px 14px 80px;
+      -webkit-font-smoothing: antialiased;
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+    }
+    header {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(34, 197, 94, 0.12);
+      color: #4ade80;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-status .dot {
+      width: 6px;
+      height: 6px;
+      background: #22c55e;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #22c55e;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-top: 14px;
+    }
+    @media (min-width: 600px) {
+      .stats-row {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 2px;
+    }
+    .stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+      position: sticky;
+      top: 0;
+      background: rgba(9, 9, 11, 0.95);
+      backdrop-filter: blur(14px);
+      padding: 10px 0;
+      z-index: 50;
+      border-bottom: 1px solid var(--card-border);
+    }
+    .search-box {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus {
+      border-color: var(--accent);
+    }
+    .filter-pills {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      padding-bottom: 2px;
+      scrollbar-width: none;
+    }
+    .filter-pills::-webkit-scrollbar {
+      display: none;
+    }
+    .pill {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      color: var(--text-muted);
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.2s;
+    }
+    .pill:hover, .pill:active {
+      background: var(--card-hover);
+      color: var(--text-main);
+    }
+    .pill.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .post-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .post-card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      position: relative;
+    }
+    .post-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .meta-tags {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .tag {
+      background: var(--badge-bg);
+      border: 1px solid var(--badge-border);
+      padding: 3px 7px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+    .tag.time {
+      color: #93c5fd;
+      border-color: rgba(59, 130, 246, 0.3);
+      background: var(--accent-muted);
+    }
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--badge-border);
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-family: inherit;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover, .copy-btn:active {
+      background: var(--badge-bg);
+      color: var(--text-main);
+      border-color: #52525b;
+    }
+    .post-content {
+      font-size: 14.5px;
+      line-height: 1.65;
+      color: #e4e4e7;
+      white-space: pre-line;
+      margin-bottom: 12px;
+    }
+    .post-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px dashed #27272a;
+      font-size: 11px;
+      color: #71717a;
+    }
+    .id-tag {
+      font-family: monospace;
+      letter-spacing: 0.5px;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand">
+        <h1>Threads Mini App</h1>
+        <div class="badge-status">
+          <span class="dot"></span>
+          <span>100% Scheduled</span>
+        </div>
+      </div>
+      <p style="color: var(--text-muted); font-size: 13px;">
+        Arsip 155 Konten Terjadwal Akun <strong>@azzimi_</strong> (11 Sep – 11 Okt 2026).
+      </p>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Total</div>
+          <div class="stat-val">155 Post</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Durasi</div>
+          <div class="stat-val">31 Hari</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Frekuensi</div>
+          <div class="stat-val">5 / Hari</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Akun</div>
+          <div class="stat-val">@azzimi_</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <input type="text" id="searchInput" class="search-box" placeholder="Cari topik (kendali, proses, motivasi, gagal)..." />
+      
+      <div class="filter-pills">
+        <button class="pill active" data-filter="all">Semua (155)</button>
+        <button class="pill" data-filter="07:30">Pagi 07:30</button>
+        <button class="pill" data-filter="11:45">Siang 11:45</button>
+        <button class="pill" data-filter="14:30">Sore 14:30</button>
+        <button class="pill" data-filter="19:45">Malam 19:45</button>
+        <button class="pill" data-filter="21:45">Larut 21:45</button>
+      </div>
+    </div>
+
+    <div id="postList" class="post-list"></div>
+    <div id="emptyState" class="empty-state" style="display: none;">Tidak ada konten yang sesuai pencarian.</div>
+  </div>
+
+  <script>
+    // Initialize Telegram Web App SDK
+    const tg = window.Telegram?.WebApp;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      try {
+        tg.setHeaderColor('#09090b');
+        tg.setBackgroundColor('#09090b');
+      } catch(e) {}
+    }
+
+    function triggerHaptic(type = 'light') {
+      if (tg?.HapticFeedback) {
+        tg.HapticFeedback.impactOccurred(type);
+      }
+    }
+
+    const POSTS_DATA = [{"scheduleId": "6aa36aedc85adf65ab675c1d", "date_wib": "2026-09-11", "time_wib": "11:45", "slot_name": "Siang", "scheduleAt": "2026-09-11T04:45:00.000Z", "text": "Terlalu banyak mikirin omongan orang yang bahkan gak kenal kita itu cuma buang energi.\n\nFokus kita cukup satu: kerjakan apa yang bisa kita kendalikan hari ini, sisanya biar waktu yang jawab."}, {"scheduleId": "6aa36aed4226d33a0a1e97f3", "date_wib": "2026-09-11", "time_wib": "14:30", "slot_name": "Sore", "scheduleAt": "2026-09-11T07:30:00.000Z", "text": "Banyak orang nunggu motivasi datang baru mulai gerak.\n\nPadahal jalan keluarnya sederhana: mulai aja dulu dari hal paling kecil. Motivasi itu biasanya baru nyusul setelah kita jalan, bukan sebelum."}, {"scheduleId": "6aa36aedc85adf65ab675c22", "date_wib": "2026-09-11", "time_wib": "17:15", "slot_name": "Sore Akhir", "scheduleAt": "2026-09-11T10:15:00.000Z", "text": "Kita gak punya kuasa buat bikin semua orang paham sama proses kita.\n\nMelainkan kita punya kendali penuh buat gak berhenti berusaha, meskipun jalannya harus kita lewati sendirian."}, {"scheduleId": "6aa36aed4226d33a0a1e97f7", "date_wib": "2026-09-11", "time_wib": "19:45", "slot_name": "Malam", "scheduleAt": "2026-09-11T12:45:00.000Z", "text": "Khawatir berlebihan sama hasil akhir itu gak bakal ngerubah apa-apa.\n\nYang nentuin arah ke depan bukan seberapa cemas kita memikirkannya, melainkan seberapa konsisten kita mengulangi hal-hal benar setiap hari."}, {"scheduleId": "6aa36aedc85adf65ab675c26", "date_wib": "2026-09-11", "time_wib": "21:45", "slot_name": "Larut", "scheduleAt": "2026-09-11T14:45:00.000Z", "text": "Hari ini mungkin gak berjalan persis sesuai rencana.\n\nGak apa-apa. Lepaskan apa yang sudah lewat, syukuri apa yang berhasil kita lewati, dan persiapkan diri buat mulai lagi besok pagi."}, {"scheduleId": "6aa36b8cc85adf65ab6778e3", "date_wib": "2026-09-12", "time_wib": "07:30", "scheduleAt": "2026-09-12T00:30:00.000Z", "text": "Pagi ini kita gak punya kuasa buat ngatur reaksi orang lain terhadap kita.\n\nYang bisa kita atur cuma satu: bagaimana cara kita merespons dan bersikap dengan tenang.", "createdAt": "2026-09-11T02:46:36.558335+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b8c4226d33a0a1ea9e4", "date_wib": "2026-09-12", "time_wib": "11:45", "scheduleAt": "2026-09-12T04:45:00.000Z", "text": "Siang ini coba jeda sejenak dan evaluasi apa yang menyita pikiranmu.\n\nKalau itu di luar kendalimu, lepaskan. Jangan biarkan energimu habis percuma.", "createdAt": "2026-09-11T02:46:36.938588+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b8d4226d33a0a1ea9ef", "date_wib": "2026-09-12", "time_wib": "14:30", "scheduleAt": "2026-09-12T07:30:00.000Z", "text": "Sore ini menjelang tutup hari, ingat bahwa rasa lelah itu tanda kita sudah berjuang.\n\nApapun hasilnya hari ini, syukuri prosesnya.", "createdAt": "2026-09-11T02:46:37.313835+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b8d4226d33a0a1ea9f9", "date_wib": "2026-09-12", "time_wib": "19:45", "scheduleAt": "2026-09-12T12:45:00.000Z", "text": "Malam hari adalah waktu paling tepat untuk bercermin secara jujur dengan diri sendiri.\n\nBukan untuk menyalahkan diri, melainkan untuk belajar lebih bijak.", "createdAt": "2026-09-11T02:46:37.684494+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b8ec85adf65ab677932", "date_wib": "2026-09-12", "time_wib": "21:45", "scheduleAt": "2026-09-12T14:45:00.000Z", "text": "Sebelum memejamkan mata, sadari bahwa kamu sudah bertahan sejauh ini melewati banyak badai yang dulu kamu kira gak sanggup kamu lewati.", "createdAt": "2026-09-11T02:46:38.059949+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b934226d33a0a1eab27", "date_wib": "2026-09-13", "time_wib": "07:30", "scheduleAt": "2026-09-13T00:30:00.000Z", "text": "Banyak orang mengira produktif itu harus langsung ngerjain hal-hal besar.\n\nPadahal jalan keluarnya sederhana: selesaikan satu hal kecil dengan tuntas sebelum mikirin hal berikutnya.", "createdAt": "2026-09-11T02:46:43.902999+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b944226d33a0a1eab48", "date_wib": "2026-09-13", "time_wib": "11:45", "scheduleAt": "2026-09-13T04:45:00.000Z", "text": "Banyak orang merasa lelah bukan karena fisiknya capek, melainkan karena isi kepalanya terlalu sibuk mikirin hal yang gak ada gunanya.", "createdAt": "2026-09-11T02:46:44.278618+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b944226d33a0a1eab67", "date_wib": "2026-09-13", "time_wib": "14:30", "scheduleAt": "2026-09-13T07:30:00.000Z", "text": "Terlalu banyak mikir sebelum bertindak itu seringkali cuma bentuk lain dari rasa takut gagal.\n\nJalan keluarnya: kurangi analisis berlebih, perbanyak aksi nyata.", "createdAt": "2026-09-11T02:46:44.657888+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b954226d33a0a1eab79", "date_wib": "2026-09-13", "time_wib": "19:45", "scheduleAt": "2026-09-13T12:45:00.000Z", "text": "Khawatir berlebihan sama masa depan itu cuma meminjam masalah dari hari esok.\n\nFokus perbaiki apa yang bisa kita benahi malam ini.", "createdAt": "2026-09-11T02:46:45.042324+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b95c85adf65ab677a9a", "date_wib": "2026-09-13", "time_wib": "21:45", "scheduleAt": "2026-09-13T14:45:00.000Z", "text": "Malam semakin larut, saatnya melepaskan semua kendali dan berserah sepenuhnya kepada Sang Pemilik Semesta.", "createdAt": "2026-09-11T02:46:45.422099+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b95c85adf65ab677aa7", "date_wib": "2026-09-14", "time_wib": "07:30", "scheduleAt": "2026-09-14T00:30:00.000Z", "text": "Berhenti menunggu hari yang sempurna buat mulai melangkah.\n\nKondisi ideal itu gak pernah ada, melainkan kita yang belajar beradaptasi di tengah segala keterbatasan.", "createdAt": "2026-09-11T02:46:45.795842+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b96c85adf65ab677ab0", "date_wib": "2026-09-14", "time_wib": "11:45", "scheduleAt": "2026-09-14T04:45:00.000Z", "text": "Nah, jalan keluarnya kalau lagi buntu di tengah hari: tarik napas, istirahat sejenak, dan sederhanakan prioritasmu.", "createdAt": "2026-09-11T02:46:46.172987+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b964226d33a0a1eaba3", "date_wib": "2026-09-14", "time_wib": "14:30", "scheduleAt": "2026-09-14T07:30:00.000Z", "text": "Konsistensi itu bukan berarti gak pernah merasa bosan.\n\nKonsistensi adalah tetap melakukan apa yang harus dilakukan meskipun rasa bosan itu datang.", "createdAt": "2026-09-11T02:46:46.550509+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b96c85adf65ab677ac5", "date_wib": "2026-09-14", "time_wib": "19:45", "scheduleAt": "2026-09-14T12:45:00.000Z", "text": "Kita gak dinilai dari seberapa banyak orang yang memuji kita, melainkan dari bagaimana integritas kita saat gak ada orang yang melihat.", "createdAt": "2026-09-11T02:46:46.922603+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b974226d33a0a1eabb6", "date_wib": "2026-09-14", "time_wib": "21:45", "scheduleAt": "2026-09-14T14:45:00.000Z", "text": "Gak ada yang perlu disesali secara berlebihan.\n\nSetiap langkah, bahkan yang keliru sekalipun, adalah bagian dari perjalanan membentuk pribadimu yang sekarang.", "createdAt": "2026-09-11T02:46:47.295988+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b97c85adf65ab677ada", "date_wib": "2026-09-15", "time_wib": "07:30", "scheduleAt": "2026-09-15T00:30:00.000Z", "text": "Energi kita setiap pagi itu ada batasnya.\n\nJangan dihabiskan buat mikirin hal-hal yang bahkan belum tentu terjadi di masa depan.", "createdAt": "2026-09-11T02:46:47.669895+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b984226d33a0a1eabce", "date_wib": "2026-09-15", "time_wib": "11:45", "scheduleAt": "2026-09-15T04:45:00.000Z", "text": "Kritik dari orang yang gak pernah ikut berjuang bareng kita itu gak perlu dimasukkan ke hati.\n\nDengarkan secukupnya, saring yang berguna, buang sisanya.", "createdAt": "2026-09-11T02:46:48.047706+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b984226d33a0a1eabdd", "date_wib": "2026-09-15", "time_wib": "14:30", "scheduleAt": "2026-09-15T07:30:00.000Z", "text": "Kita gak bisa mempercepat pertumbuhan tanaman dengan menarik daunnya.\n\nSemua butuh waktu, proses, dan kesabaran untuk berbuah.", "createdAt": "2026-09-11T02:46:48.427121+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b98c85adf65ab677afd", "date_wib": "2026-09-15", "time_wib": "19:45", "scheduleAt": "2026-09-15T12:45:00.000Z", "text": "Nah, jangan biarkan algoritma dan linimasa media sosial mencuri ketenangan malammu dengan rasa kurang yang gak nyata.", "createdAt": "2026-09-11T02:46:48.798852+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b994226d33a0a1eabed", "date_wib": "2026-09-15", "time_wib": "21:45", "scheduleAt": "2026-09-15T14:45:00.000Z", "text": "Nah, jalan keluar dari hati yang gelisah di larut malam adalah tawakal: meyakini bahwa rencana Tuhan selalu lebih baik dari skenario kita.", "createdAt": "2026-09-11T02:46:49.235435+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b994226d33a0a1eac0a", "date_wib": "2026-09-16", "time_wib": "07:30", "scheduleAt": "2026-09-16T00:30:00.000Z", "text": "Fokus sama apa yang ada di depan mata hari ini.\n\nMasa lalu sudah lewat dan masa depan belum tiba, yang nyata cuma tindakan kita detik ini.", "createdAt": "2026-09-11T02:46:49.607311+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b99c85adf65ab677b2e", "date_wib": "2026-09-16", "time_wib": "11:45", "scheduleAt": "2026-09-16T04:45:00.000Z", "text": "Gak semua pesan atau tuntutan orang lain harus kita tanggapi detik itu juga.\n\nMenjaga batasan diri itu bagian dari menjaga kewarasan.", "createdAt": "2026-09-11T02:46:49.977385+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b9ac85adf65ab677b3c", "date_wib": "2026-09-16", "time_wib": "14:30", "scheduleAt": "2026-09-16T07:30:00.000Z", "text": "Jangan pulang dengan membawa beban pekerjaan yang sudah gak bisa kamu ubah sore ini.\n\nTinggalkan di meja kerja, selesaikan besok dengan energi baru.", "createdAt": "2026-09-11T02:46:50.350835+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b9a4226d33a0a1eac28", "date_wib": "2026-09-16", "time_wib": "19:45", "scheduleAt": "2026-09-16T12:45:00.000Z", "text": "Kebahagiaan sejati itu letaknya di dalam rasa cukup, bukan di dalam perlombaan tanpa akhir untuk memiliki segalanya.", "createdAt": "2026-09-11T02:46:50.729234+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b9bc85adf65ab677b4d", "date_wib": "2026-09-16", "time_wib": "21:45", "scheduleAt": "2026-09-16T14:45:00.000Z", "text": "Lepaskan semua beban pikiran yang kamu pikul hari ini.\n\nEsok hari punya urusannya sendiri, dan kamu butuh tenaga untuk menghadapinya.", "createdAt": "2026-09-11T02:46:51.112024+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b9b4226d33a0a1eac33", "date_wib": "2026-09-17", "time_wib": "07:30", "scheduleAt": "2026-09-17T00:30:00.000Z", "text": "Gak perlu buru-buru membandingkan awal perjalanan kita sama pencapaian orang lain.\n\nSetiap orang punya ritme dan ujiannya masing-masing.", "createdAt": "2026-09-11T02:46:51.490161+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b9bc85adf65ab677b5b", "date_wib": "2026-09-17", "time_wib": "11:45", "scheduleAt": "2026-09-17T04:45:00.000Z", "text": "Kita gak punya kuasa buat menyenangkan ekspektasi semua pihak.\n\nFokus selesaikan tanggung jawab utama kita dulu.", "createdAt": "2026-09-11T02:46:51.860481+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b9c4226d33a0a1eac40", "date_wib": "2026-09-17", "time_wib": "14:30", "scheduleAt": "2026-09-17T07:30:00.000Z", "text": "Nah, jalan keluarnya kalau motivasi lagi turun: jangan andalkan perasaan, tapi andalkan sistem dan kebiasaan yang sudah kamu bangun.", "createdAt": "2026-09-11T02:46:52.230478+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b9cc85adf65ab677b72", "date_wib": "2026-09-17", "time_wib": "19:45", "scheduleAt": "2026-09-17T12:45:00.000Z", "text": "Pikiran kita ibarat air; kalau terus diaduk dengan rasa cemas, ia akan keruh. Tapi kalau dibiarkan tenang, jawabannya akan terlihat jelas.", "createdAt": "2026-09-11T02:46:52.600825+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b9cc85adf65ab677b84", "date_wib": "2026-09-17", "time_wib": "21:45", "scheduleAt": "2026-09-17T14:45:00.000Z", "text": "Tidurlah dalam damai. Kamu sudah berjuang dengan baik hari ini, dan itu sudah lebih dari cukup.", "createdAt": "2026-09-11T02:46:52.975317+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b9d4226d33a0a1eac65", "date_wib": "2026-09-18", "time_wib": "07:30", "scheduleAt": "2026-09-18T00:30:00.000Z", "text": "Nah, kunci ketenangan pagi ini bukan menghilangkan masalah, melainkan memilah mana yang patut kita pikirkan dan mana yang harus kita abaikan.", "createdAt": "2026-09-11T02:46:53.346903+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b9dc85adf65ab677b9c", "date_wib": "2026-09-18", "time_wib": "11:45", "scheduleAt": "2026-09-18T04:45:00.000Z", "text": "Di tengah hari yang padat, ingat lagi kenapa kita memilih jalan ini.\n\nTujuan yang jelas bikin rasa lelah terasa punya arti.", "createdAt": "2026-09-11T02:46:53.722449+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b9ec85adf65ab677ba8", "date_wib": "2026-09-18", "time_wib": "14:30", "scheduleAt": "2026-09-18T07:30:00.000Z", "text": "Keberhasilan jangka panjang itu kumpulan dari hari-hari biasa yang kita jalani dengan disiplin tinggi.", "createdAt": "2026-09-11T02:46:54.100635+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36b9e4226d33a0a1eac7d", "date_wib": "2026-09-18", "time_wib": "19:45", "scheduleAt": "2026-09-18T12:45:00.000Z", "text": "Jangan habiskan malammu dengan memikirkan penyesalan.\n\nJadikan kesalahan sebagai guru terbaik dan melangkahlah maju dengan lebih matang.", "createdAt": "2026-09-11T02:46:54.477895+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36b9ec85adf65ab677bc5", "date_wib": "2026-09-18", "time_wib": "21:45", "scheduleAt": "2026-09-18T14:45:00.000Z", "text": "Ketenangan malam ini adalah pengingat bahwa setelah hari yang panjang dan melelahkan, selalu ada waktu untuk beristirahat.", "createdAt": "2026-09-11T02:46:54.852265+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36b9fc85adf65ab677bd6", "date_wib": "2026-09-19", "time_wib": "07:30", "scheduleAt": "2026-09-19T00:30:00.000Z", "text": "Kita gak bisa memaksa keadaan buat selalu berpihak ke kita.\n\nTapi kita selalu punya kendali penuh buat gak kehilangan arah saat keadaan lagi sulit.", "createdAt": "2026-09-11T02:46:55.223212+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36b9f4226d33a0a1eacab", "date_wib": "2026-09-19", "time_wib": "11:45", "scheduleAt": "2026-09-19T04:45:00.000Z", "text": "Jangan korbankan kedamaian pikiran cuma demi terlihat sibuk di mata orang lain.", "createdAt": "2026-09-11T02:46:55.600066+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36b9f4226d33a0a1eacb6", "date_wib": "2026-09-19", "time_wib": "14:30", "scheduleAt": "2026-09-19T07:30:00.000Z", "text": "Kalau hari ini terasa berat, bukan berarti kamu gagal.\n\nItu cuma tanda bahwa kamu sedang ditempa untuk naik kelas.", "createdAt": "2026-09-11T02:46:55.970515+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36ba0c85adf65ab677bf7", "date_wib": "2026-09-19", "time_wib": "19:45", "scheduleAt": "2026-09-19T12:45:00.000Z", "text": "Orang yang bijak tahu kapan harus berjuang sekuat tenaga, dan tahu kapan harus berserah dengan penuh keikhlasan.", "createdAt": "2026-09-11T02:46:56.348726+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36ba04226d33a0a1eacbe", "date_wib": "2026-09-19", "time_wib": "21:45", "scheduleAt": "2026-09-19T14:45:00.000Z", "text": "Jangan biarkan bisikan keraguan merusak keyakinanmu akan masa depan.\n\nTetaplah percaya pada proses yang sedang kamu jalani.", "createdAt": "2026-09-11T02:46:56.723752+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36ba14226d33a0a1eacc5", "date_wib": "2026-09-20", "time_wib": "07:30", "scheduleAt": "2026-09-20T00:30:00.000Z", "text": "Langkah kecil yang konsisten setiap pagi jauh lebih berharga daripada rencana besar yang cuma berhenti di angan-angan.", "createdAt": "2026-09-11T02:46:57.092301+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36ba1c85adf65ab677c0f", "date_wib": "2026-09-20", "time_wib": "11:45", "scheduleAt": "2026-09-20T04:45:00.000Z", "text": "Terkadang cara terbaik merespons situasi yang menyebalkan adalah dengan diam dan tetap fokus pada pekerjaan kita.", "createdAt": "2026-09-11T02:46:57.470114+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36ba14226d33a0a1eacd0", "date_wib": "2026-09-20", "time_wib": "14:30", "scheduleAt": "2026-09-20T07:30:00.000Z", "text": "Gak usah berkecil hati kalau hasil belum kelihatan sekarang.\n\nPondasi yang kuat memang selalu butuh waktu lebih lama untuk dibangun.", "createdAt": "2026-09-11T02:46:57.843629+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36ba24226d33a0a1eacd8", "date_wib": "2026-09-20", "time_wib": "19:45", "scheduleAt": "2026-09-20T12:45:00.000Z", "text": "Malam ini ingatkan diri kita: hasil akhir bukan ranah kendali kita, melainkan seberapa konsisten kita menjaga niat baik dalam setiap ikhtiar.", "createdAt": "2026-09-11T02:46:58.222896+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36ba2c85adf65ab677c3a", "date_wib": "2026-09-20", "time_wib": "21:45", "scheduleAt": "2026-09-20T14:45:00.000Z", "text": "Ikhlaskan apa yang belum tercapai hari ini.\n\nYang tertunda bukan berarti dibatalkan, mungkin waktunya saja yang sedang disempurnakan.", "createdAt": "2026-09-11T02:46:58.597140+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36ba2c85adf65ab677c4c", "date_wib": "2026-09-21", "time_wib": "07:30", "scheduleAt": "2026-09-21T00:30:00.000Z", "text": "Bangun pagi dengan mindset sederhana: kerjakan apa yang menjadi porsi kita hari ini sebaik mungkin, sisanya serahkan pada takdir.", "createdAt": "2026-09-11T02:46:58.963493+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36ba3c85adf65ab677c5a", "date_wib": "2026-09-21", "time_wib": "11:45", "scheduleAt": "2026-09-21T04:45:00.000Z", "text": "Bukan masalahnya yang membuat kita stres, melainkan penilaian dan kekhawatiran kita terhadap masalah tersebut.", "createdAt": "2026-09-11T02:46:59.346075+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36ba3c85adf65ab677c70", "date_wib": "2026-09-21", "time_wib": "14:30", "scheduleAt": "2026-09-21T07:30:00.000Z", "text": "Banggalah pada dirimu yang tetap memilih bertahan dan gak menyerah di tengah kesulitan hari ini.", "createdAt": "2026-09-11T02:46:59.721260+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36ba44226d33a0a1ead02", "date_wib": "2026-09-21", "time_wib": "19:45", "scheduleAt": "2026-09-21T12:45:00.000Z", "text": "Tidurlah dengan memaafkan semua orang yang mungkin menyakiti hatimu hari ini.\n\nBukan demi mereka, melainkan demi kedamaian jiwamu sendiri.", "createdAt": "2026-09-11T02:47:00.095164+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36ba44226d33a0a1ead11", "date_wib": "2026-09-21", "time_wib": "21:45", "scheduleAt": "2026-09-21T14:45:00.000Z", "text": "Di keheningan larut malam ini, ucapkan terima kasih kepada tubuh dan pikiranmu yang sudah setia menemanimu berjuang.", "createdAt": "2026-09-11T02:47:00.477042+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36ba4c85adf65ab677cbe", "date_wib": "2026-09-22", "time_wib": "07:30", "scheduleAt": "2026-09-22T00:30:00.000Z", "text": "Jangan biarkan hal-hal kecil di luar kendali merusak suasana hati sepanjang hari.\n\nKita yang pegang kendali atas pikiran kita sendiri.", "createdAt": "2026-09-11T02:47:00.861647+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36ba5c85adf65ab677cd4", "date_wib": "2026-09-22", "time_wib": "11:45", "scheduleAt": "2026-09-22T04:45:00.000Z", "text": "Kalau rencanamu pagi tadi ada yang melenceng siang ini, gak usah panik.\n\nSesuaikan langkah, cari jalan keluar alternatif, dan terus jalan.", "createdAt": "2026-09-11T02:47:01.237120+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36ba54226d33a0a1ead5c", "date_wib": "2026-09-22", "time_wib": "14:30", "scheduleAt": "2026-09-22T07:30:00.000Z", "text": "Lepaskan keinginan untuk mengontrol segala hal.\n\nAda bagian yang menjadi ikhtiar kita, dan ada bagian yang menjadi ketetapan Tuhan.", "createdAt": "2026-09-11T02:47:01.617211+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36ba5c85adf65ab677d11", "date_wib": "2026-09-22", "time_wib": "19:45", "scheduleAt": "2026-09-22T12:45:00.000Z", "text": "Gak ada pencapaian di luar sana yang sebanding dengan hilangnya ketenangan batin kita.", "createdAt": "2026-09-11T02:47:02.001015+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36ba64226d33a0a1ead8a", "date_wib": "2026-09-22", "time_wib": "21:45", "scheduleAt": "2026-09-22T14:45:00.000Z", "text": "Dunia gak akan runtuh hanya karena satu harimu terasa gak sempurna.\n\nTidurlah, besok kita mulai lagi dengan energi baru.", "createdAt": "2026-09-11T02:47:02.371920+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36ba6c85adf65ab677d30", "date_wib": "2026-09-23", "time_wib": "07:30", "scheduleAt": "2026-09-23T00:30:00.000Z", "text": "Memulai hari dengan tenang itu pilihan.\n\nTarik napas dalam, sadari apa yang sedang dihadapi, dan jalani satu per satu tanpa tergesa-gesa.", "createdAt": "2026-09-11T02:47:02.769614+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36ba7c85adf65ab677d87", "date_wib": "2026-09-23", "time_wib": "11:45", "scheduleAt": "2026-09-23T04:45:00.000Z", "text": "Orang yang tenang di tengah kekacauan bukan orang yang gak punya masalah, melainkan orang yang tahu apa yang layak dipedulikan.", "createdAt": "2026-09-11T02:47:03.240362+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36ba7c85adf65ab677dad", "date_wib": "2026-09-23", "time_wib": "14:30", "scheduleAt": "2026-09-23T07:30:00.000Z", "text": "Orang yang kuat mentalnya bukan yang gak pernah jatuh, melainkan yang selalu bangkit setiap kali tersandung.", "createdAt": "2026-09-11T02:47:03.618154+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36ba7c85adf65ab677dd0", "date_wib": "2026-09-23", "time_wib": "19:45", "scheduleAt": "2026-09-23T12:45:00.000Z", "text": "Satu-satunya orang yang perlu kamu buktikan adalah dirimu sendiri di masa lalu, bukan orang lain yang cuma jadi penonton.", "createdAt": "2026-09-11T02:47:03.989798+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36ba84226d33a0a1eae3f", "date_wib": "2026-09-23", "time_wib": "21:45", "scheduleAt": "2026-09-23T14:45:00.000Z", "text": "Serahkan segala kekhawatiranmu ke tangan Tuhan.\n\nDia gak pernah tidur saat kamu sedang beristirahat memulihkan tenaga.", "createdAt": "2026-09-11T02:47:04.371840+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36ba84226d33a0a1eae68", "date_wib": "2026-09-24", "time_wib": "07:30", "scheduleAt": "2026-09-24T00:30:00.000Z", "text": "Keberanian itu bukan berarti gak punya rasa takut, melainkan tetap melangkah maju meskipun rasa ragu itu ada.", "createdAt": "2026-09-11T02:47:04.757661+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36ba94226d33a0a1eae8b", "date_wib": "2026-09-24", "time_wib": "11:45", "scheduleAt": "2026-09-24T04:45:00.000Z", "text": "Hargai waktu istirahat siangmu.\n\nTubuh dan pikiran kita butuh jeda supaya bisa berfungsi dengan baik sampai sore nanti.", "createdAt": "2026-09-11T02:47:05.139062+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36ba94226d33a0a1eae9f", "date_wib": "2026-09-24", "time_wib": "14:30", "scheduleAt": "2026-09-24T07:30:00.000Z", "text": "Sore ini, luangkan waktu untuk melihat seberapa jauh kamu sudah melangkah, bukan cuma melihat seberapa jauh puncak yang belum tercapai.", "createdAt": "2026-09-11T02:47:05.512106+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36ba94226d33a0a1eaeb0", "date_wib": "2026-09-24", "time_wib": "19:45", "scheduleAt": "2026-09-24T12:45:00.000Z", "text": "Ketika kita berhenti mencari pengakuan dari luar, saat itulah kita menemukan kekuatan sejati di dalam diri.", "createdAt": "2026-09-11T02:47:05.885507+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36baa4226d33a0a1eaec1", "date_wib": "2026-09-24", "time_wib": "21:45", "scheduleAt": "2026-09-24T14:45:00.000Z", "text": "Jadikan keheningan malam ini sebagai ruang untuk memaafkan dirimu sendiri atas segala kekurangan yang ada.", "createdAt": "2026-09-11T02:47:06.269173+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36baa4226d33a0a1eaed0", "date_wib": "2026-09-25", "time_wib": "07:30", "scheduleAt": "2026-09-25T00:30:00.000Z", "text": "Tugas kita pagi ini bukan menyenangkan semua orang, melainkan memastikan diri kita tetap berada di jalur yang benar.", "createdAt": "2026-09-11T02:47:06.646947+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bab4226d33a0a1eaee7", "date_wib": "2026-09-25", "time_wib": "11:45", "scheduleAt": "2026-09-25T04:45:00.000Z", "text": "Fokus kita adalah pada kualitas tindakan kita, bukan pada penilaian orang lain terhadap kita.", "createdAt": "2026-09-11T02:47:07.021767+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bab4226d33a0a1eaef5", "date_wib": "2026-09-25", "time_wib": "14:30", "scheduleAt": "2026-09-25T07:30:00.000Z", "text": "Kebaikan kecil yang kamu tabur hari ini mungkin gak langsung berbalas sekarang, tapi gak ada yang sia-sia.", "createdAt": "2026-09-11T02:47:07.391499+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bab4226d33a0a1eaf07", "date_wib": "2026-09-25", "time_wib": "19:45", "scheduleAt": "2026-09-25T12:45:00.000Z", "text": "Malam ini renungkan: apa hal baik yang berhasil kamu pelajari hari ini, meskipun harimu terasa berat?", "createdAt": "2026-09-11T02:47:07.772766+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bac4226d33a0a1eaf1f", "date_wib": "2026-09-25", "time_wib": "21:45", "scheduleAt": "2026-09-25T14:45:00.000Z", "text": "Malam ini cukup sampai di sini.\n\nMatikan lampu, letakkan beban, dan biarkan jiwamu beristirahat dengan tenang.", "createdAt": "2026-09-11T02:47:08.145947+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bacc85adf65ab677ede", "date_wib": "2026-09-26", "time_wib": "07:30", "scheduleAt": "2026-09-26T00:30:00.000Z", "text": "Setiap hari baru adalah kesempatan buat memperbaiki cara pandang kita terhadap masalah yang sama.", "createdAt": "2026-09-11T02:47:08.525389+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bacc85adf65ab677f0b", "date_wib": "2026-09-26", "time_wib": "11:45", "scheduleAt": "2026-09-26T04:45:00.000Z", "text": "Menolak hal-hal yang gak penting di siang hari adalah bentuk komitmen kita pada hal yang benar-benar bernilai.", "createdAt": "2026-09-11T02:47:08.955965+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36badc85adf65ab677f57", "date_wib": "2026-09-26", "time_wib": "14:30", "scheduleAt": "2026-09-26T07:30:00.000Z", "text": "Sederhanakan hidupmu: kurangi ekspektasi berlebih pada manusia, perbanyak bersandar pada Yang Maha Memiliki Segalanya.", "createdAt": "2026-09-11T02:47:09.326645+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36badc85adf65ab677f72", "date_wib": "2026-09-26", "time_wib": "19:45", "scheduleAt": "2026-09-26T12:45:00.000Z", "text": "Belajarlah untuk melepaskan hal-hal yang memang sudah gak bisa diperbaiki lagi.\n\nRuang baru hanya tercipta saat kita berani mengikhlaskan yang lama.", "createdAt": "2026-09-11T02:47:09.698034+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bae4226d33a0a1eafce", "date_wib": "2026-09-26", "time_wib": "21:45", "scheduleAt": "2026-09-26T14:45:00.000Z", "text": "Gak usah bawa cemas hari esok ke tempat tidur malam ini.\n\nTutup hari dengan tenang: yang kemarin sudah selesai, yang besok kita hadapi saat harinya sudah tiba.", "createdAt": "2026-09-11T02:47:10.078311+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36baec85adf65ab677fa6", "date_wib": "2026-09-27", "time_wib": "07:30", "scheduleAt": "2026-09-27T00:30:00.000Z", "text": "Gak ada gunanya menyesali apa yang kemarin gagal kita selesaikan.\n\nHari ini lembaran baru, fokus pada apa yang bisa kita perbaiki sekarang.", "createdAt": "2026-09-11T02:47:10.454928+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36baec85adf65ab677fb8", "date_wib": "2026-09-27", "time_wib": "11:45", "scheduleAt": "2026-09-27T04:45:00.000Z", "text": "Jangan buang waktu berdebat dengan orang yang tujuannya cuma ingin menang, bukan mencari kebenaran.", "createdAt": "2026-09-11T02:47:10.828170+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bafc85adf65ab677fc9", "date_wib": "2026-09-27", "time_wib": "14:30", "scheduleAt": "2026-09-27T07:30:00.000Z", "text": "Menutup sore dengan perasaan cukup itu sebuah pencapaian tersendiri di tengah dunia yang selalu menuntut lebih.", "createdAt": "2026-09-11T02:47:11.208101+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36baf4226d33a0a1eb02a", "date_wib": "2026-09-27", "time_wib": "19:45", "scheduleAt": "2026-09-27T12:45:00.000Z", "text": "Kalau kepala kita masih penuh sama isi linimasa, taruh HP-nya sebentar.\n\nKetenangan malam itu kita sendiri yang ciptakan, bukan dicari dari scrolling tanpa henti.", "createdAt": "2026-09-11T02:47:11.583223+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bafc85adf65ab677ff5", "date_wib": "2026-09-27", "time_wib": "21:45", "scheduleAt": "2026-09-27T14:45:00.000Z", "text": "Tidurlah dengan rasa syukur yang mendalam.\n\nMasih diberi napas dan kesempatan berikhtiar adalah nikmat yang luar biasa.", "createdAt": "2026-09-11T02:47:11.960635+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bb0c85adf65ab678005", "date_wib": "2026-09-28", "time_wib": "07:30", "scheduleAt": "2026-09-28T00:30:00.000Z", "text": "Dunia di luar sana mungkin berisik dan serba menuntut.\n\nTapi kedamaian di dalam pikiran kita sepenuhnya ada di bawah kendali kita.", "createdAt": "2026-09-11T02:47:12.335686+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bb04226d33a0a1eb064", "date_wib": "2026-09-28", "time_wib": "11:45", "scheduleAt": "2026-09-28T04:45:00.000Z", "text": "Tuntaskan pekerjaan yang ada di hadapanmu satu demi satu.\n\nMultitasking berlebihan cuma bikin pikiran terpecah dan hasil gak maksimal.", "createdAt": "2026-09-11T02:47:12.711139+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bb1c85adf65ab678023", "date_wib": "2026-09-28", "time_wib": "14:30", "scheduleAt": "2026-09-28T07:30:00.000Z", "text": "Jangan bandingkan proses di balik layarmu dengan panggung depan orang lain yang tampak berkilau di media sosial.", "createdAt": "2026-09-11T02:47:13.095384+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bb1c85adf65ab67803e", "date_wib": "2026-09-28", "time_wib": "19:45", "scheduleAt": "2026-09-28T12:45:00.000Z", "text": "Bukan seberapa mewah hidup kita yang membuat kita terhormat, melainkan seberapa lurus prinsip yang kita pegang teguh.", "createdAt": "2026-09-11T02:47:13.473077+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bb1c85adf65ab678051", "date_wib": "2026-09-28", "time_wib": "21:45", "scheduleAt": "2026-09-28T14:45:00.000Z", "text": "Gak ada masalah yang abadi di dunia ini; semuanya datang untuk berlalu, begitu pula dengan kesulitan yang sedang kamu hadapi.", "createdAt": "2026-09-11T02:47:13.866696+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bb24226d33a0a1eb0b8", "date_wib": "2026-09-29", "time_wib": "07:30", "scheduleAt": "2026-09-29T00:30:00.000Z", "text": "Mulailah dengan niat yang lurus dan tindakan nyata.\n\nHasil akhir biar urusan Yang Maha Kuasa, kewajiban kita cuma berusaha semaksimal mungkin.", "createdAt": "2026-09-11T02:47:14.240773+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bb2c85adf65ab67807e", "date_wib": "2026-09-29", "time_wib": "11:45", "scheduleAt": "2026-09-29T04:45:00.000Z", "text": "Nah, kalau merasa mulai kewalahan, tanyakan pada diri sendiri: apa satu hal paling penting yang harus beres hari ini?", "createdAt": "2026-09-11T02:47:14.631413+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bb24226d33a0a1eb0da", "date_wib": "2026-09-29", "time_wib": "14:30", "scheduleAt": "2026-09-29T07:30:00.000Z", "text": "Kita gak punya kuasa buat mengulang hari ini, tapi kita punya kuasa buat belajar dari setiap kekeliruan yang terjadi.", "createdAt": "2026-09-11T02:47:15.004608+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bb3c85adf65ab6780ad", "date_wib": "2026-09-29", "time_wib": "19:45", "scheduleAt": "2026-09-29T12:45:00.000Z", "text": "Nah, jalan keluarnya kalau pikiranmu masih berisik malam ini: tuliskan apa yang kamu rasakan di atas kertas, lalu letakkan pena itu.", "createdAt": "2026-09-11T02:47:15.374037+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bb3c85adf65ab6780c3", "date_wib": "2026-09-29", "time_wib": "21:45", "scheduleAt": "2026-09-29T14:45:00.000Z", "text": "Nah, malam larut ini bukan waktu untuk berdebat dengan pikiran sendiri, melainkan waktu untuk melepaskan semuanya dengan lapang dada.", "createdAt": "2026-09-11T02:47:15.746257+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bb4c85adf65ab6780d6", "date_wib": "2026-09-30", "time_wib": "07:30", "scheduleAt": "2026-09-30T00:30:00.000Z", "text": "Bukan seberapa cepat kita berlari hari ini yang penting, melainkan arah yang kita tuju sudah benar atau belum.", "createdAt": "2026-09-11T02:47:16.122474+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bb4c85adf65ab6780eb", "date_wib": "2026-09-30", "time_wib": "11:45", "scheduleAt": "2026-09-30T04:45:00.000Z", "text": "Kejernihan berpikir itu mahal harganya. Jangan kotori dengan gosip atau drama yang gak ada sangkut pautnya sama masa depanmu.", "createdAt": "2026-09-11T02:47:16.496622+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bb44226d33a0a1eb13d", "date_wib": "2026-09-30", "time_wib": "14:30", "scheduleAt": "2026-09-30T07:30:00.000Z", "text": "Tinggalkan urusan pekerjaan saat waktu kerja usai.\n\nKeluarga dan dirimu sendiri berhak mendapatkan perhatian utuhmu sore ini.", "createdAt": "2026-09-11T02:47:16.871247+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bb5c85adf65ab678107", "date_wib": "2026-09-30", "time_wib": "19:45", "scheduleAt": "2026-09-30T12:45:00.000Z", "text": "Setiap ujian yang datang selalu membawa hikmah bagi mereka yang mau merenung dengan hati yang bersih.", "createdAt": "2026-09-11T02:47:17.245659+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bb5c85adf65ab67811b", "date_wib": "2026-09-30", "time_wib": "21:45", "scheduleAt": "2026-09-30T14:45:00.000Z", "text": "Kekuatan baru akan hadir esok pagi bagi mereka yang tahu cara mengistirahatkan jiwanya malam ini.", "createdAt": "2026-09-11T02:47:17.620369+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bb5c85adf65ab678134", "date_wib": "2026-10-01", "time_wib": "07:30", "scheduleAt": "2026-10-01T00:30:00.000Z", "text": "Ketenangan batin itu bukan pemberian orang lain, melainkan hasil dari keputusan kita buat berhenti mengurusi hal yang sia-sia.", "createdAt": "2026-09-11T02:47:17.993802+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bb6c85adf65ab678141", "date_wib": "2026-10-01", "time_wib": "11:45", "scheduleAt": "2026-10-01T04:45:00.000Z", "text": "Kita gak bisa mengatur apa yang orang lain katakan di belakang kita, tapi kita punya kuasa penuh buat membuktikan kapasitas kita lewat karya nyata.", "createdAt": "2026-09-11T02:47:18.379173+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bb6c85adf65ab67814a", "date_wib": "2026-10-01", "time_wib": "14:30", "scheduleAt": "2026-10-01T07:30:00.000Z", "text": "Bukan seberapa keras usaha kita dalam satu hari yang nentuin hasil, melainkan seberapa konsisten kita mengulang hal benar setiap hari.\n\nProses yang tenang tapi gak pernah berhenti selalu menang pada akhirnya.", "createdAt": "2026-09-11T02:47:18.755471+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bb7c85adf65ab678157", "date_wib": "2026-10-01", "time_wib": "19:45", "scheduleAt": "2026-10-01T12:45:00.000Z", "text": "Jangan biarkan kesuksesan membuatmu sombong, dan jangan biarkan kegagalan membuatmu putus asa.", "createdAt": "2026-09-11T02:47:19.130824+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bb7c85adf65ab678167", "date_wib": "2026-10-01", "time_wib": "21:45", "scheduleAt": "2026-10-01T14:45:00.000Z", "text": "Tutup matamu dengan keyakinan bahwa setiap lelahmu dalam kebaikan dicatat sebagai amal yang berharga.", "createdAt": "2026-09-11T02:47:19.508390+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bb7c85adf65ab678170", "date_wib": "2026-10-02", "time_wib": "07:30", "scheduleAt": "2026-10-02T00:30:00.000Z", "text": "Fokus pada proses di tangan kita.\n\nKetika kita sibuk memberikan yang terbaik, rasa cemas perlahan bakal hilang dengan sendirinya.", "createdAt": "2026-09-11T02:47:19.893617+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bb8c85adf65ab67817b", "date_wib": "2026-10-02", "time_wib": "11:45", "scheduleAt": "2026-10-02T04:45:00.000Z", "text": "Jadikan kritik yang membangun sebagai bahan evaluasi, dan jadikan cemoohan sebagai angin lalu.", "createdAt": "2026-09-11T02:47:20.269606+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bb8c85adf65ab678189", "date_wib": "2026-10-02", "time_wib": "14:30", "scheduleAt": "2026-10-02T07:30:00.000Z", "text": "Nah, kalau ada hal yang belum tuntas sore ini, catat sebagai prioritas besok dan biarkan pikiranmu beristirahat.", "createdAt": "2026-09-11T02:47:20.648316+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bb9c85adf65ab678194", "date_wib": "2026-10-02", "time_wib": "19:45", "scheduleAt": "2026-10-02T12:45:00.000Z", "text": "Malam ini jadilah kawan terbaik bagi dirimu sendiri, bukan hakim yang paling kejam atas kekuranganmu.", "createdAt": "2026-09-11T02:47:21.023304+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bb9c85adf65ab6781a7", "date_wib": "2026-10-02", "time_wib": "21:45", "scheduleAt": "2026-10-02T14:45:00.000Z", "text": "Hari ini kamu sudah berjuang semaksimal yang kamu bisa.\n\nSekarang waktunya istirahat. Lepaskan semua beban pikiran, biarkan tubuh dan pikiranmu pulih.", "createdAt": "2026-09-11T02:47:21.402202+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bb94226d33a0a1eb1b1", "date_wib": "2026-10-03", "time_wib": "07:30", "scheduleAt": "2026-10-03T00:30:00.000Z", "text": "Nah, kadang yang bikin pagi kita berat bukan tugasnya, melainkan beban pikiran yang kita buat-buat sendiri.", "createdAt": "2026-09-11T02:47:21.784797+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bba4226d33a0a1eb1c1", "date_wib": "2026-10-03", "time_wib": "11:45", "scheduleAt": "2026-10-03T04:45:00.000Z", "text": "Tetaplah berpijak pada fakta, bukan pada asumsi buruk yang diciptakan oleh rasa lelah.", "createdAt": "2026-09-11T02:47:22.159332+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bba4226d33a0a1eb1d4", "date_wib": "2026-10-03", "time_wib": "14:30", "scheduleAt": "2026-10-03T07:30:00.000Z", "text": "Kedewasaan adalah ketika kita bisa menerima bahwa gak semua hal di dunia ini berjalan sesuai keinginan kita tanpa menjadi pahit hati.", "createdAt": "2026-09-11T02:47:22.545834+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bbac85adf65ab6781d5", "date_wib": "2026-10-03", "time_wib": "19:45", "scheduleAt": "2026-10-03T12:45:00.000Z", "text": "Syukuri tempat berteduh dan rezeki yang masih menghidupi kita hari ini.\n\nBanyak orang di luar sana yang mendambakan apa yang kita miliki sekarang.", "createdAt": "2026-09-11T02:47:22.924270+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bbbc85adf65ab6781ef", "date_wib": "2026-10-03", "time_wib": "21:45", "scheduleAt": "2026-10-03T14:45:00.000Z", "text": "Istirahatlah, pejuang. Kamu gak harus menyelesaikan semuanya sekaligus dalam satu hari.", "createdAt": "2026-09-11T02:47:23.303472+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bbbc85adf65ab67821c", "date_wib": "2026-10-04", "time_wib": "07:30", "scheduleAt": "2026-10-04T00:30:00.000Z", "text": "Jalani hari ini dengan prinsip sederhana: jujur pada diri sendiri dan bertanggung jawab atas setiap keputusan yang kita ambil.", "createdAt": "2026-09-11T02:47:23.675300+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bbc4226d33a0a1eb242", "date_wib": "2026-10-04", "time_wib": "11:45", "scheduleAt": "2026-10-04T04:45:00.000Z", "text": "Di tengah riuhnya siang ini, sediakan lima menit untuk hening dan mengembalikan kesadaran penuh pada diri sendiri.", "createdAt": "2026-09-11T02:47:24.057392+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bbc4226d33a0a1eb26c", "date_wib": "2026-10-04", "time_wib": "14:30", "scheduleAt": "2026-10-04T07:30:00.000Z", "text": "Hargai setiap usaha kecilmu hari ini, sekecil apapun itu kelihatannya.", "createdAt": "2026-09-11T02:47:24.442885+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bbcc85adf65ab67828f", "date_wib": "2026-10-04", "time_wib": "19:45", "scheduleAt": "2026-10-04T12:45:00.000Z", "text": "Ketenangan paling nyata itu datang dari rasa cukup.\n\nBukan saat kita punya segalanya, melainkan saat kita bisa bersyukur atas apa yang sudah ada di tangan hari ini.", "createdAt": "2026-09-11T02:47:24.828102+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bbd4226d33a0a1eb29a", "date_wib": "2026-10-04", "time_wib": "21:45", "scheduleAt": "2026-10-04T14:45:00.000Z", "text": "Esok mentari akan terbit kembali membawa harapan dan peluang yang baru untukmu.", "createdAt": "2026-09-11T02:47:25.210659+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bbdc85adf65ab6782b1", "date_wib": "2026-10-05", "time_wib": "07:30", "scheduleAt": "2026-10-05T00:30:00.000Z", "text": "Kita gak bisa mengontrol cuaca atau sikap orang lain di jalan.\n\nYang bisa kita kontrol adalah kesabaran dan respons kita saat menghadapinya.", "createdAt": "2026-09-11T02:47:25.586596+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bbdc85adf65ab6782bb", "date_wib": "2026-10-05", "time_wib": "11:45", "scheduleAt": "2026-10-05T04:45:00.000Z", "text": "Disiplin itu bukan tentang memaksakan diri sampai hancur, melainkan konsisten menjaga ritme kerja yang berkelanjutan.", "createdAt": "2026-09-11T02:47:25.955469+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bbe4226d33a0a1eb2bb", "date_wib": "2026-10-05", "time_wib": "14:30", "scheduleAt": "2026-10-05T07:30:00.000Z", "text": "Bukan banyaknya hal yang kita lakukan yang membuat kita bermakna, melainkan ketulusan dan kualitas dari apa yang kita perbuat.", "createdAt": "2026-09-11T02:47:26.328626+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bbe4226d33a0a1eb2c0", "date_wib": "2026-10-05", "time_wib": "19:45", "scheduleAt": "2026-10-05T12:45:00.000Z", "text": "Istirahatlah dengan keyakinan bahwa apa yang ditakdirkan untukmu gak akan pernah melewatkanmu.", "createdAt": "2026-09-11T02:47:26.714476+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bbf4226d33a0a1eb2cd", "date_wib": "2026-10-05", "time_wib": "21:45", "scheduleAt": "2026-10-05T14:45:00.000Z", "text": "Lepaskan semua penat dan ketegangan ototmu.\n\nMalam ini kamu aman, dan kamu berhak mendapatkan tidur yang nyenyak.", "createdAt": "2026-09-11T02:47:27.086456+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bbfc85adf65ab6782e6", "date_wib": "2026-10-06", "time_wib": "07:30", "scheduleAt": "2026-10-06T00:30:00.000Z", "text": "Lakukan apa yang benar hari ini, bukan apa yang sekadar gampang atau populer.", "createdAt": "2026-09-11T02:47:27.465060+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bbf4226d33a0a1eb2e2", "date_wib": "2026-10-06", "time_wib": "11:45", "scheduleAt": "2026-10-06T04:45:00.000Z", "text": "Kadang kita cuma butuh segelas air putih dan beberapa menit jeda untuk melihat masalah dari sudut pandang yang jauh lebih jernih.", "createdAt": "2026-09-11T02:47:27.835485+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bc04226d33a0a1eb2ec", "date_wib": "2026-10-06", "time_wib": "14:30", "scheduleAt": "2026-10-06T07:30:00.000Z", "text": "Berjalanlah pulang dengan dada lapang, mengetahui bahwa kamu sudah berusaha semampumu hari ini.", "createdAt": "2026-09-11T02:47:28.232472+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bc04226d33a0a1eb2f6", "date_wib": "2026-10-06", "time_wib": "19:45", "scheduleAt": "2026-10-06T12:45:00.000Z", "text": "Lepaskan semua gengsi dan ambisi yang melelahkan jiwa.\n\nHidup ini terlalu singkat untuk dihabiskan demi memvalidasi ego.", "createdAt": "2026-09-11T02:47:28.604594+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bc04226d33a0a1eb2ff", "date_wib": "2026-10-06", "time_wib": "21:45", "scheduleAt": "2026-10-06T14:45:00.000Z", "text": "Tawakal bukan berarti pasrah tanpa usaha, melainkan berserah setelah ikhtiar terbaik sudah kita tunaikan.", "createdAt": "2026-09-11T02:47:28.972788+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bc1c85adf65ab678323", "date_wib": "2026-10-07", "time_wib": "07:30", "scheduleAt": "2026-10-07T00:30:00.000Z", "text": "Pagi ini cukup fokus jadi pribadi yang sedikit lebih baik daripada diri kita kemarin.", "createdAt": "2026-09-11T02:47:29.354306+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bc14226d33a0a1eb321", "date_wib": "2026-10-07", "time_wib": "11:45", "scheduleAt": "2026-10-07T04:45:00.000Z", "text": "Jangan biarkan kesalahan kecil di pagi hari merusak sisa produktivitasmu siang ini.", "createdAt": "2026-09-11T02:47:29.729751+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bc24226d33a0a1eb327", "date_wib": "2026-10-07", "time_wib": "14:30", "scheduleAt": "2026-10-07T07:30:00.000Z", "text": "Jangan biarkan kelelahan fisik berubah menjadi amarah kepada orang-orang terdekat di rumah.", "createdAt": "2026-09-11T02:47:30.105699+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bc2c85adf65ab67833a", "date_wib": "2026-10-07", "time_wib": "19:45", "scheduleAt": "2026-10-07T12:45:00.000Z", "text": "Kebaikan yang kamu sembunyikan malam ini jauh lebih berharga daripada kebaikan yang kamu pamerkan demi tepuk tangan.", "createdAt": "2026-09-11T02:47:30.487090+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bc24226d33a0a1eb333", "date_wib": "2026-10-07", "time_wib": "21:45", "scheduleAt": "2026-10-07T14:45:00.000Z", "text": "Semoga tidurmu malam ini membawa kesegaran bagi raga dan ketenangan bagi jiwa.", "createdAt": "2026-09-11T02:47:30.862599+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bc3c85adf65ab67834d", "date_wib": "2026-10-08", "time_wib": "07:30", "scheduleAt": "2026-10-08T00:30:00.000Z", "text": "Kekuatan mental itu dibangun dari keputusan-keputusan kecil setiap pagi untuk tetap disiplin saat motivasi lagi hilang.", "createdAt": "2026-09-11T02:47:31.242735+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bc34226d33a0a1eb342", "date_wib": "2026-10-08", "time_wib": "11:45", "scheduleAt": "2026-10-08T04:45:00.000Z", "text": "Pikiran yang tenang adalah senjata terkuat untuk menghadapi tekanan pekerjaan.", "createdAt": "2026-09-11T02:47:31.614249+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bc34226d33a0a1eb351", "date_wib": "2026-10-08", "time_wib": "14:30", "scheduleAt": "2026-10-08T07:30:00.000Z", "text": "Ketenangan sore hari adalah upah bagi mereka yang menjalani harinya dengan penuh kejujuran.", "createdAt": "2026-09-11T02:47:31.985498+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bc4c85adf65ab678365", "date_wib": "2026-10-08", "time_wib": "19:45", "scheduleAt": "2026-10-08T12:45:00.000Z", "text": "Belajar ikhlas itu seumur hidup, tapi malam ini kita bisa memulainya dengan satu hal kecil: menerima apa adanya.", "createdAt": "2026-09-11T02:47:32.361343+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bc4c85adf65ab678372", "date_wib": "2026-10-08", "time_wib": "21:45", "scheduleAt": "2026-10-08T14:45:00.000Z", "text": "Fase sulit itu gak bakal berlangsung selamanya.\n\nYang penting malam ini istirahat yang cukup, besok pagi kita mulai lagi dengan pikiran yang jauh lebih segar.", "createdAt": "2026-09-11T02:47:32.737520+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bc54226d33a0a1eb364", "date_wib": "2026-10-09", "time_wib": "07:30", "scheduleAt": "2026-10-09T00:30:00.000Z", "text": "Jangan biarkan ekspektasi orang lain mendikte langkah hidup kita hari ini.", "createdAt": "2026-09-11T02:47:33.117201+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bc5c85adf65ab678383", "date_wib": "2026-10-09", "time_wib": "11:45", "scheduleAt": "2026-10-09T04:45:00.000Z", "text": "Apa yang kita abaikan seringkali sama pentingnya dengan apa yang kita kerjakan.", "createdAt": "2026-09-11T02:47:33.488455+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bc5c85adf65ab678397", "date_wib": "2026-10-09", "time_wib": "14:30", "scheduleAt": "2026-10-09T07:30:00.000Z", "text": "Bersyukurlah untuk napas dan kesempatan berproses yang masih diberikan sampai detik ini.", "createdAt": "2026-09-11T02:47:33.864305+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bc64226d33a0a1eb389", "date_wib": "2026-10-09", "time_wib": "19:45", "scheduleAt": "2026-10-09T12:45:00.000Z", "text": "Tutup hari dengan doa yang tulus, memohon petunjuk agar esok kita bisa menjadi manusia yang lebih bermanfaat.", "createdAt": "2026-09-11T02:47:34.241627+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bc64226d33a0a1eb396", "date_wib": "2026-10-09", "time_wib": "21:45", "scheduleAt": "2026-10-09T14:45:00.000Z", "text": "Tidurlah dengan hati yang bersih dari rasa iri, dengki, dan dendam.", "createdAt": "2026-09-11T02:47:34.612341+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bc6c85adf65ab6783be", "date_wib": "2026-10-10", "time_wib": "07:30", "scheduleAt": "2026-10-10T00:30:00.000Z", "text": "Milikilah kerendahan hati untuk belajar dan keteguhan hati untuk terus berproses.", "createdAt": "2026-09-11T02:47:34.988637+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bc7c85adf65ab6783ca", "date_wib": "2026-10-10", "time_wib": "11:45", "scheduleAt": "2026-10-10T04:45:00.000Z", "text": "Bekerjalah dengan sungguh-sungguh bukan untuk pujian, melainkan untuk kepuasan batin karena telah menunaikan amanah.", "createdAt": "2026-09-11T02:47:35.365698+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bc7c85adf65ab6783d8", "date_wib": "2026-10-10", "time_wib": "14:30", "scheduleAt": "2026-10-10T07:30:00.000Z", "text": "Tutup sore ini dengan satu kesadaran: apa yang sudah terjadi biarlah berlalu, yang penting kita sudah melangkah.", "createdAt": "2026-09-11T02:47:35.739054+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bc8c85adf65ab6783e4", "date_wib": "2026-10-10", "time_wib": "19:45", "scheduleAt": "2026-10-10T12:45:00.000Z", "text": "Ketenangan batin malam ini adalah modal utama untuk menyambut fajar esok hari dengan penuh harapan.", "createdAt": "2026-09-11T02:47:36.117655+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bc84226d33a0a1eb3c5", "date_wib": "2026-10-10", "time_wib": "21:45", "scheduleAt": "2026-10-10T14:45:00.000Z", "text": "Hidup kita ini bukan ajang pembuktian ke orang lain.\n\nKetenangan itu baru kita dapat saat kita berhenti membanding-bandingkan dan fokus menjalani jalan kita sendiri.", "createdAt": "2026-09-11T02:47:36.500616+00:00", "slot_name": "Larut (21:45)"}, {"scheduleId": "6aa36bc84226d33a0a1eb3d4", "date_wib": "2026-10-11", "time_wib": "07:30", "scheduleAt": "2026-10-11T00:30:00.000Z", "text": "Hari ini adalah hadiah yang nyata. Jangan disia-siakan dengan mengeluhkan hal-hal yang gak bisa kita ubah.", "createdAt": "2026-09-11T02:47:36.876059+00:00", "slot_name": "Pagi (07:30)"}, {"scheduleId": "6aa36bc94226d33a0a1eb3dd", "date_wib": "2026-10-11", "time_wib": "11:45", "scheduleAt": "2026-10-11T04:45:00.000Z", "text": "Selesaikan bagianmu siang ini dengan penuh tanggung jawab, tanpa perlu mengeluh.", "createdAt": "2026-09-11T02:47:37.250615+00:00", "slot_name": "Siang (11:45)"}, {"scheduleId": "6aa36bc94226d33a0a1eb3e4", "date_wib": "2026-10-11", "time_wib": "14:30", "scheduleAt": "2026-10-11T07:30:00.000Z", "text": "Istirahatkan fisikmu, tenangkan batinmu, hari ini sudah selesai dengan baik.", "createdAt": "2026-09-11T02:47:37.644996+00:00", "slot_name": "Sore (14:30)"}, {"scheduleId": "6aa36bcac85adf65ab678404", "date_wib": "2026-10-11", "time_wib": "19:45", "scheduleAt": "2026-10-11T12:45:00.000Z", "text": "Rebahkan tubuhmu, tenangkan pikiranmu, biarkan Tuhan yang mengatur sisanya malam ini.", "createdAt": "2026-09-11T02:47:38.019606+00:00", "slot_name": "Malam (19:45)"}, {"scheduleId": "6aa36bcac85adf65ab678411", "date_wib": "2026-10-11", "time_wib": "21:45", "scheduleAt": "2026-10-11T14:45:00.000Z", "text": "Selamat beristirahat.\n\nEsok kita melangkah lagi dengan kepala tegak dan langkah yang jauh lebih mantap.", "createdAt": "2026-09-11T02:47:38.417929+00:00", "slot_name": "Larut (21:45)"}];
+
+    let currentFilter = 'all';
+    let searchQuery = '';
+
+    const listEl = document.getElementById('postList');
+    const emptyEl = document.getElementById('emptyState');
+    const searchInput = document.getElementById('searchInput');
+    const pills = document.querySelectorAll('.pill');
+
+    function render() {
+      const filtered = POSTS_DATA.filter(p => {
+        const matchesFilter = currentFilter === 'all' || p.time_wib.includes(currentFilter);
+        const matchesSearch = !searchQuery || p.text.toLowerCase().includes(searchQuery.toLowerCase()) || p.date_wib.includes(searchQuery);
+        return matchesFilter && matchesSearch;
+      });
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+      }
+      emptyEl.style.display = 'none';
+
+      listEl.innerHTML = filtered.map((p, idx) => `
+        <div class="post-card">
+          <div class="post-meta">
+            <div class="meta-tags">
+              <span class="tag">📅 ${p.date_wib}</span>
+              <span class="tag time">⏰ ${p.time_wib} WIB</span>
+              <span class="tag">${p.slot_name || 'Slot'}</span>
+            </div>
+            <button class="copy-btn" data-text="${encodeURIComponent(p.text)}" onclick="copyText(this)">Salin Teks</button>
+          </div>
+          <div class="post-content">${escapeHtml(p.text)}</div>
+          <div class="post-footer">
+            <span class="id-tag">ID: ${p.scheduleId || '-'}</span>
+            <span>Target: @azzimi_</span>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function escapeHtml(str) {
+      return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    window.copyText = function(btn) {
+      triggerHaptic('medium');
+      const text = decodeURIComponent(btn.getAttribute('data-text'));
+      navigator.clipboard.writeText(text).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = 'Tersalin!';
+        btn.style.color = '#4ade80';
+        setTimeout(() => {
+          btn.innerText = orig;
+          btn.style.color = '';
+        }, 1500);
+      });
+    };
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value.trim();
+      render();
+    });
+
+    pills.forEach(pill => {
+      pill.addEventListener('click', () => {
+        triggerHaptic('light');
+        pills.forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        currentFilter = pill.getAttribute('data-filter');
+        render();
+      });
+    });
+
+    render();
+  </script>
+</body>
+</html>
